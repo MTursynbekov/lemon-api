@@ -5,20 +5,17 @@ from django.db import models
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
-from utils.constants import CATEGORY_TYPES, CATEGORY_TYPE_CLOTHES, PRODUCT_TYPE, WOMEN_PRODUCT
+from utils.constants import PRODUCT_TYPE, WOMEN_PRODUCT
 
 
 class Category(MPTTModel):
     name = models.CharField(max_length=50,
                             verbose_name="Название категории")
     parent = TreeForeignKey('self',
-                            on_delete=models.CASCADE,
+                            on_delete=models.DO_NOTHING,
                             null=True, blank=True,
-                            related_name='children',
+                            related_name='sub_categories',
                             verbose_name="Родитель категории")
-    type = models.SmallIntegerField(choices=CATEGORY_TYPES,
-                                    default=CATEGORY_TYPE_CLOTHES,
-                                    verbose_name="Тип категории")
 
     class MPTTMeta:
         order_insertion_by = ['name']
@@ -33,9 +30,6 @@ class Category(MPTTModel):
 
     def __unicode__(self):
         return self.name
-
-
-mptt.register(Category, order_insertion_by=['name'])
 
 
 class City(models.Model):
@@ -79,11 +73,11 @@ class Store(models.Model):
 
 
 class Promotion(models.Model):
-    src = models.ImageField(upload_to="images/promotion")
+    src = models.ImageField(upload_to="images/promotions")
     duration = models.DurationField(verbose_name="Срок акции")
     brand = models.ForeignKey(Brand,
                               on_delete=models.CASCADE,
-                              related_name="special_offers",
+                              related_name="promotions",
                               verbose_name="Бренд",
                               blank=True,
                               null=True)
@@ -99,9 +93,11 @@ class Promotion(models.Model):
 class Product(models.Model):
     name = models.CharField(max_length=300, verbose_name="Название продукта")
     price = models.FloatField(verbose_name="Цена")
+    discount = models.PositiveSmallIntegerField(default=0, verbose_name='Скидка')
     in_stock = models.BooleanField(default=False, verbose_name='Есть в наличии?')
-    short_description = models.CharField(max_length=100, verbose_name="Краткое описание")
-    description = models.TextField(verbose_name="Описание", default="")
+    in_top = models.BooleanField(default=False, verbose_name='В топе?')
+    short_description = models.CharField(blank=True, null=True, max_length=100, verbose_name="Краткое описание")
+    long_description = models.TextField(blank=True, null=True, verbose_name="Описание")
     publication_date = models.DateTimeField(auto_now_add=True, verbose_name='Время создания')
     discount_ends_date = models.DateField(default=date.today, verbose_name="Время окончания скидки")
     type = models.CharField(choices=PRODUCT_TYPE,
@@ -138,6 +134,25 @@ class Product(models.Model):
     def __str__(self):
         return f'{self.name}'
 
+    @property
+    def price_with_discount(self):
+        return self.price * (1 - self.discount // 100)
+
+
+class ProductSpecification(models.Model):
+    key = models.CharField(max_length=50, verbose_name='Ключ')
+    value = models.CharField(max_length=50, verbose_name='Значение')
+    product = models.ForeignKey(Product,
+                                on_delete=models.CASCADE,
+                                verbose_name='Продукт',
+                                related_name='specifications',
+                                blank=True,
+                                null=True)
+
+    class Meta:
+        verbose_name = 'Характеристика продукта'
+        verbose_name_plural = 'Характеристики продукта'
+
 
 class ProductImage(models.Model):
     src = models.ImageField(upload_to='images/product')
@@ -151,30 +166,3 @@ class ProductImage(models.Model):
     class Meta:
         verbose_name = "Картинка продукта"
         verbose_name_plural = "Картинки продукта"
-
-    def __str__(self):
-        return f'Картинки product: {self.product}'
-
-
-class Clothes(Product):
-    size = IntegerRangeField(verbose_name="Размер")
-    euro_size = models.CharField(max_length=10,
-                                 blank=True,
-                                 null=True,
-                                 verbose_name="Размер, европейский стандарт")
-
-    class Meta:
-        verbose_name = "Одежда"
-
-
-class Shoes(Product):
-    size = IntegerRangeField(verbose_name="Размер")
-
-    class Meta:
-        verbose_name = "Обувь"
-
-
-class Accessories(Product):
-    class Meta:
-        verbose_name = "Аксессуар"
-        verbose_name_plural = "Аксессуары"
