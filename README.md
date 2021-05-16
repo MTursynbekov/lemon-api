@@ -2,7 +2,8 @@
 Django REST Framework project within a Backend Django Framework course
 
 ## Getting Started
-For correct work you need to create virtual environment with python 3.8
+For correct work you need to create virtual environment with python 3.8.
+
 Creation of virtual environments on Windows is done by executing the command ```venv```:
 ```
 python -m venv /path/to/new/virtual/environment
