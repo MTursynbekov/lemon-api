@@ -1,11 +1,11 @@
-import mptt
 from datetime import date
-from django.contrib.postgres.fields import IntegerRangeField
 from django.db import models
-from mptt.fields import TreeForeignKey
-from mptt.models import MPTTModel
+from mptt.models import MPTTModel, TreeForeignKey
 
+from core.managers import PromotionManager, ProductQuerySet
 from utils.constants import PRODUCT_TYPE, WOMEN_PRODUCT
+from utils.upload import product_images_directory_path
+from utils.validators import validate_size, validate_extension, validate_discount
 
 
 class Category(MPTTModel):
@@ -69,7 +69,7 @@ class Store(models.Model):
         verbose_name_plural = "Магазины"
 
     def __str__(self):
-        return f'{self.name}'
+        return f'{self.name} {self.brand}'
 
 
 class Promotion(models.Model):
@@ -82,18 +82,20 @@ class Promotion(models.Model):
                               blank=True,
                               null=True)
 
+    objects = PromotionManager()
+
     class Meta:
         verbose_name = "Акция"
         verbose_name_plural = "Акции"
 
     def __str__(self):
-        return f'Акция brand: {self.brand}'
+        return f'Акция {self.brand}'
 
 
 class Product(models.Model):
     name = models.CharField(max_length=300, verbose_name="Название продукта")
     price = models.FloatField(verbose_name="Цена")
-    discount = models.PositiveSmallIntegerField(default=0, verbose_name='Скидка')
+    discount = models.PositiveSmallIntegerField(default=0, validators=[validate_discount, ], verbose_name='Скидка')
     in_stock = models.BooleanField(default=False, verbose_name='Есть в наличии?')
     in_top = models.BooleanField(default=False, verbose_name='В топе?')
     short_description = models.CharField(blank=True, null=True, max_length=100, verbose_name="Краткое описание")
@@ -126,6 +128,8 @@ class Product(models.Model):
                                     related_name="products",
                                     verbose_name="Магазины")
 
+    objects = ProductQuerySet.as_manager()
+
     class Meta:
         ordering = ['-publication_date']
         verbose_name = "Продукт"
@@ -155,7 +159,8 @@ class ProductSpecification(models.Model):
 
 
 class ProductImage(models.Model):
-    src = models.ImageField(upload_to='images/product')
+    src = models.ImageField(upload_to=product_images_directory_path,
+                            validators=[validate_size, validate_extension])
     product = models.ForeignKey(Product,
                                 on_delete=models.CASCADE,
                                 related_name="images",

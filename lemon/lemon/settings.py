@@ -33,6 +33,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    # django applications
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -40,12 +41,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # 3-part libraries
+    # 3-party applications
     'rest_framework',
     'rest_framework_jwt',
     'mptt',
 
-    # own applications
+    # local applications
     'auth_',
     'core',
 ]
