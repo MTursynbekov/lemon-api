@@ -13,6 +13,13 @@ class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = serializers.CategorySerializer
 
+    def get_permissions(self):
+        if self.action == 'create' or self.action == 'update' or self.action == 'delete':
+            permission_classes = [IsAdminUser]
+        else:
+            permission_classes = [AllowAny]
+        return [permission() for permission in permission_classes]
+
     @action(methods=['GET'], detail=True, url_path='products')
     def category_products(self, request, pk):
         category_products = Product.objects.get_by_category(category_id=pk)
@@ -21,6 +28,13 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 class BrandsListAPIView(APIView):
+    def get_permissions(self):
+        if self.request.method.lower() == 'post':
+            permission_classes = [IsAdminUser]
+        else:
+            permission_classes = [AllowAny]
+        return [permission() for permission in permission_classes]
+
     def get(self, request):
         products = Brand.objects.all()
         serializer = serializers.BrandSerializer(products, many=True)
@@ -36,6 +50,13 @@ class BrandsListAPIView(APIView):
 
 
 class BrandDetailAPIView(APIView):
+    def get_permissions(self):
+        if self.request.method.lower() == 'get':
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAdminUser]
+        return [permission() for permission in permission_classes]
+
     def get_object(self, id):
         try:
             return Brand.objects.get(id=id)
@@ -92,6 +113,13 @@ class PromotionViewSet(viewsets.ModelViewSet):
             return serializers.PromotionCreateSerializer
         return self.serializer_class
 
+    def get_permissions(self):
+        if self.action == 'list' or self.action == 'retrieve':
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAdminUser]
+        return [permission() for permission in permission_classes]
+
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
@@ -104,6 +132,13 @@ class ProductViewSet(viewsets.ModelViewSet):
             return serializers.ProductFullSerializer
         return self.serializer_class
 
+    def get_permissions(self):
+        if self.action == 'list' or self.action == 'retrieve':
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAdminUser]
+        return [permission() for permission in permission_classes]
+
 
 class ProductImageViewSet(viewsets.GenericViewSet,
                           mixins.CreateModelMixin,
@@ -112,6 +147,7 @@ class ProductImageViewSet(viewsets.GenericViewSet,
     queryset = ProductImage.objects.all()
     serializer_class = serializers.ProductImageCreateSerializer
     parser_classes = [MultiPartParser, FormParser, JSONParser]
+    permission_classes = [IsAdminUser, ]
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -125,6 +161,7 @@ class ProductSpecificationViewSet(viewsets.GenericViewSet,
                                   mixins.DestroyModelMixin):
     queryset = ProductSpecification.objects.all()
     serializer_class = serializers.ProductSpecificationSerializer
+    permission_classes = [IsAdminUser, ]
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

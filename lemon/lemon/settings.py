@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_jwt',
     'mptt',
+    # 'django_extensions',
 
     # local applications
     'auth_',
@@ -148,6 +149,48 @@ REST_FRAMEWORK = {
 JWT_AUTH = {
     'JWT_EXPIRATION_DELTA': datetime.timedelta(days=1),
 }
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s -- %(asctime)s: %(message)s',
+        },
+        'simple': {
+            'format': '%(levelname)s -- %(message)s'
+        }
+    },
+    'handlers': {
+        'file_handler': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'test_main.log',
+            'formatter': 'verbose'
+        },
+        'console_handler': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        }
+    },
+    'loggers': {
+        'main': {
+            'handlers': ['file_handler', 'console_handler'],
+            'level': 'DEBUG',
+        },
+        'auth_': {
+            'handlers': ['console_handler'],
+            'level': 'DEBUG',
+        },
+    },
+}
+
+
+# GRAPH_MODELS = {
+#   'all_applications': True,
+#   'group_models': True,
+# }
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
