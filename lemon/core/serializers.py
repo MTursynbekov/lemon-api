@@ -41,51 +41,73 @@ class BrandSerializer(serializers.Serializer):
         return instance
 
 
-class StoreSerializers(serializers.ModelSerializer):
+class StoreSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Store
         fields = '__all__'
 
 
-class ImageSerializer(serializers.ModelSerializer):
+class ProductImageCreateSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    product_id = serializers.IntegerField(write_only=True)
+
     class Meta:
         model = models.ProductImage
-        fields = ('id', 'src',)
+        fields = ('id', 'src', 'product_id')
+
+
+class PromotionCreateSerializer(serializers.ModelSerializer):
+    brand_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = models.Promotion
+        fields = ('src', 'start_date', 'finish_date', 'brand_id')
+
+    def validate(self, attr):
+        if attr['start_date'] > attr['finish_date']:
+            raise serializers.ValidationError("end of promotion must occur after it starts")
+        return attr
+
+
+class PromotionReadSerializer(PromotionCreateSerializer):
+    brand = BrandSerializer()
+
+    class Meta(PromotionCreateSerializer.Meta):
+        fields = ('id', 'brand') + PromotionCreateSerializer.Meta.fields
 
 
 class ProductSpecificationSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    product_id = serializers.IntegerField(write_only=True)
+
     class Meta:
         model = models.ProductSpecification
-        fields = ('key', 'value')
+        fields = ('id', 'key', 'value', 'product_id')
 
 
 class ProductWriteSerializer(serializers.ModelSerializer):
+    category_id = serializers.IntegerField(write_only=True)
+
     class Meta:
         model = models.Product
         fields = ('name', 'price', 'discount', 'category_id')
-        extra_kwargs = {
-            'category_id': {'write_only': True},
-        }
-
-    def validate(self, attr):
-        if attr['publication_date'] > attr['discount_ends_date']:
-            raise serializers.ValidationError("discount must end after publication date")
-        return attr
 
 
 class ProductReadSerializer(ProductWriteSerializer):
     category = CategorySerializer()
     city = CitySerializer()
     brand = BrandSerializer()
-    images = ImageSerializer(many=True)
+    images = ProductImageCreateSerializer(many=True)
+    id = serializers.IntegerField(read_only=True)
 
-    class Meta:
-        fields = ProductWriteSerializer.Meta.fields + ('price_ with_discount', 'city', 'category', 'brand', 'images')
+    class Meta(ProductWriteSerializer.Meta):
+        fields = ('id',) + ProductWriteSerializer.Meta.fields + (
+            'price_with_discount', 'city', 'category', 'brand', 'images')
 
 
 class ProductFullSerializer(ProductReadSerializer):
-    stores = StoreSerializers()
+    stores = StoreSerializer(many=True)
     specifications = ProductSpecificationSerializer(many=True)
 
-    class Meta:
+    class Meta(ProductReadSerializer.Meta):
         fields = '__all__'

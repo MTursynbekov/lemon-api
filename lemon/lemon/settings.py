@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
+import datetime
 import os
 from pathlib import Path
 import environ
@@ -142,6 +143,10 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ),
+}
+
+JWT_AUTH = {
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=1),
 }
 
 MEDIA_URL = '/media/'

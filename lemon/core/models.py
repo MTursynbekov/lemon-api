@@ -74,7 +74,8 @@ class Store(models.Model):
 
 class Promotion(models.Model):
     src = models.ImageField(upload_to="images/promotions")
-    duration = models.DurationField(verbose_name="Срок акции")
+    start_date = models.DateField(default=date.today, verbose_name="Начало акции")
+    finish_date = models.DateField(default=date.today, verbose_name="Конец акции")
     brand = models.ForeignKey(Brand,
                               on_delete=models.CASCADE,
                               related_name="promotions",
@@ -140,7 +141,7 @@ class Product(models.Model):
 
     @property
     def price_with_discount(self):
-        return self.price * (1 - self.discount // 100)
+        return self.price - (self.price * self.discount) // 100
 
 
 class ProductSpecification(models.Model):
